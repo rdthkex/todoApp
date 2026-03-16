@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>할일 캘린더</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #F5F5F5;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+    }
+
+    .screen {
+      width: 390px;
+      min-height: 100vh;
+      background: #F5F5F5;
+      position: relative;
+      padding-bottom: 80px;
+    }
+
+    /* Header */
+    .header {
+      width: 100%;
+      height: 80px;
+      background: #FFFFFF;
+      padding: 44px 20px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .header h1 { font-size: 20px; font-weight: bold; color: #1A1A1A; }
+    .btn-profile {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #E8F0FD; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: #4A90E2; font-size: 16px;
+    }
+
+    /* Month Nav */
+    .month-nav {
+      background: #FFFFFF;
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      margin-top: 1px;
+    }
+    .btn-month {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: #F5F5F5; border: none; cursor: pointer;
+      font-size: 18px; color: #555; display: flex; align-items: center; justify-content: center;
+    }
+    .month-label {
+      flex: 1; text-align: center;
+      font-size: 17px; font-weight: 600; color: #1A1A1A;
+    }
+
+    /* Legend */
+    .legend {
+      background: #FFFFFF;
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 1px;
+      flex-wrap: wrap;
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+    .legend-item span { font-size: 12px; color: #666; }
+
+    /* Calendar */
+    .calendar {
+      background: #FFFFFF;
+      padding: 0 8px 8px;
+      margin-top: 1px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .dow-header {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      height: 36px;
+    }
+    .dow-header span {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 500;
+    }
+    .week {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+    }
+    .day-cell {
+      height: 52px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: flex-start;
+      padding-top: 8px;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: background 0.15s;
+    }
+    .day-cell:hover { background: rgba(0,0,0,0.04); }
+    .day-number {
+      font-size: 14px; color: #333;
+      width: 30px; height: 30px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+    }
+    .day-cell.today { background: rgba(74,144,226,0.08); }
+    .day-cell.today .day-number {
+      background: #4A90E2; color: #FFFFFF; font-weight: bold;
+    }
+    .day-cell.sunday .day-number { color: #FF4444; }
+    .day-cell.saturday .day-number { color: #4A90E2; }
+    .day-cell.today .day-number { color: #FFFFFF; }
+    .dots {
+      display: flex; gap: 3px; margin-top: 2px;
+    }
+    .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+    }
+
+    /* Todo Section */
+    .todo-section {
+      margin-top: 12px;
+      padding: 0 20px;
+    }
+    .todo-date-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 12px;
+    }
+    .todo-date { font-size: 16px; font-weight: bold; color: #1A1A1A; }
+    .today-badge {
+      font-size: 12px; color: #4A90E2;
+      background: rgba(74,144,226,0.1);
+      padding: 3px 8px; border-radius: 10px;
+    }
+
+    .todo-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .todo-card {
+      width: 100%;
+      background: #FFFFFF;
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .color-bar {
+      width: 4px; height: 40px;
+      border-radius: 2px;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    .todo-checkbox {
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 2px solid #DDD;
+      margin-right: 10px; flex-shrink: 0;
+      cursor: pointer; appearance: none;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .todo-checkbox:checked { border-color: transparent; }
+    .todo-info { flex: 1; }
+    .todo-title { font-size: 15px; font-weight: 500; color: #1A1A1A; }
+    .todo-meta { font-size: 12px; margin-top: 3px; }
+    .btn-more {
+      width: 28px; height: 28px; border: none;
+      background: transparent; cursor: pointer;
+      font-size: 18px; color: #BBBBB; display: flex;
+      align-items: center; justify-content: center;
+    }
+
+    /* FAB */
+    .fab {
+      position: fixed;
+      bottom: 96px; right: calc(50% - 195px + 24px);
+      width: 56px; height: 56px; border-radius: 50%;
+      background: #4A90E2; border: none; cursor: pointer;
+      font-size: 28px; color: #FFFFFF;
+      box-shadow: 0 4px 16px rgba(74,144,226,0.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+    }
+
+    /* Modal Sheet */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-sheet {
+      width: 390px;
+      background: #FFFFFF;
+      border-radius: 20px 20px 0 0;
+      padding: 24px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+    }
+    .handle-bar {
+      width: 40px; height: 4px; background: #E0E0E0;
+      border-radius: 2px; margin: 0 auto 20px;
+    }
+    .modal-title { font-size: 18px; font-weight: bold; color: #1A1A1A; margin-bottom: 20px; }
+    .modal-input {
+      width: 100%; height: 48px;
+      background: #F5F5F5; border: none; border-radius: 10px;
+      padding: 0 14px; font-size: 15px; color: #1A1A1A;
+      margin-bottom: 14px; outline: none;
+    }
+    .date-row {
+      width: 100%; height: 48px;
+      background: #F5F5F5; border-radius: 10px;
+      padding: 0 14px; display: flex; align-items: center;
+      margin-bottom: 14px; cursor: pointer;
+    }
+    .date-row span:first-child { flex: 1; font-size: 14px; color: #888; }
+    .date-row span:last-child { font-size: 14px; color: #1A1A1A; }
+
+    .category-row {
+      display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .cat-btn {
+      height: 36px; padding: 0 12px;
+      border-radius: 18px; border: none; cursor: pointer;
+      font-size: 13px; font-weight: 500;
+      background: #F0F0F0; color: #888;
+      transition: all 0.15s;
+    }
+    .cat-btn.selected-필수   { background: rgba(255,68,68,0.1);  color: #FF4444; border: 1.5px solid #FF4444; }
+    .cat-btn.selected-건강   { background: rgba(74,144,226,0.1); color: #4A90E2; border: 1.5px solid #4A90E2; }
+    .cat-btn.selected-약속   { background: rgba(245,166,35,0.1); color: #F5A623; border: 1.5px solid #F5A623; }
+    .cat-btn.selected-놀러가기 { background: rgba(255,105,180,0.1); color: #FF69B4; border: 1.5px solid #FF69B4; }
+
+    .btn-save {
+      width: 100%; height: 52px;
+      background: #4A90E2; color: #FFFFFF;
+      border: none; border-radius: 14px;
+      font-size: 16px; font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Bottom Nav */
+    .bottom-nav {
+      position: fixed; bottom: 0;
+      width: 390px;
+      height: 80px; background: #FFFFFF;
+      display: flex; align-items: flex-start;
+      padding-top: 10px;
+      box-shadow: 0 -1px 8px rgba(0,0,0,0.06);
+      z-index: 50;
+    }
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 4px;
+      font-size: 10px; color: #AAAAAA; cursor: pointer;
+    }
+    .nav-item.active { color: #4A90E2; }
+    .nav-icon { font-size: 20px; }
+  </style>
+</head>
+<body>
+<div class="screen">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>할일 캘린더</h1>
+    <button class="btn-profile">👤</button>
+  </div>
+
+  <!-- Month Nav -->
+  <div class="month-nav">
+    <button class="btn-month" onclick="changeMonth(-1)">&#8249;</button>
+    <span class="month-label" id="monthLabel">2026년 3월</span>
+    <button class="btn-month" onclick="changeMonth(1)">&#8250;</button>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#FF4444"></div>
+      <span>필수</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#4A90E2"></div>
+      <span>건강</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#F5A623"></div>
+      <span>약속</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#FF69B4"></div>
+      <span>놀러가기</span>
+    </div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="calendar">
+    <div class="dow-header">
+      <span style="color:#FF4444">일</span>
+      <span style="color:#888">월</span>
+      <span style="color:#888">화</span>
+      <span style="color:#888">수</span>
+      <span style="color:#888">목</span>
+      <span style="color:#888">금</span>
+      <span style="color:#4A90E2">토</span>
+    </div>
+    <div id="calendarGrid"></div>
+  </div>
+
+  <!-- Todo Section -->
+  <div class="todo-section">
+    <div class="todo-date-row">
+      <span class="todo-date" id="selectedDateLabel">3월 16일 (월)</span>
+      <span class="today-badge" id="todayBadge">오늘</span>
+    </div>
+    <div class="todo-list" id="todoList"></div>
+  </div>
+
+  <!-- FAB -->
+  <button class="fab" onclick="openModal()">＋</button>
+
+  <!-- Bottom Nav -->
+  <div class="bottom-nav">
+    <div class="nav-item"><span class="nav-icon">🏠</span><span>홈</span></div>
+    <div class="nav-item active"><span class="nav-icon">📅</span><span>캘린더</span></div>
+    <div class="nav-item"><span class="nav-icon">📊</span><span>통계</span></div>
+    <div class="nav-item"><span class="nav-icon">⚙️</span><span>설정</span></div>
+  </div>
+</div>
+
+<!-- Add Todo Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOnOverlay(event)">
+  <div class="modal-sheet">
+    <div class="handle-bar"></div>
+    <div class="modal-title">할일 추가</div>
+    <input class="modal-input" id="inputTitle" type="text" placeholder="할일을 입력하세요" />
+    <div class="date-row">
+      <span>날짜</span>
+      <span id="inputDateLabel">2026. 3. 16</span>
+    </div>
+    <div class="category-row">
+      <button class="cat-btn" data-cat="필수"   onclick="selectCat(this)">필수</button>
+      <button class="cat-btn" data-cat="건강"   onclick="selectCat(this)">건강</button>
+      <button class="cat-btn" data-cat="약속"   onclick="selectCat(this)">약속</button>
+      <button class="cat-btn" data-cat="놀러가기" onclick="selectCat(this)">놀러가기</button>
+    </div>
+    <button class="btn-save" onclick="saveTodo()">저장하기</button>
+  </div>
+</div>
+
+<script>
+  const CATEGORY_COLORS = {
+    '필수':    '#FF4444',
+    '건강':    '#4A90E2',
+    '약속':    '#F5A623',
+    '놀러가기': '#FF69B4',
+  };
+
+  const DAY_NAMES = ['일','월','화','수','목','금','토'];
+  const today = new Date(2026, 2, 16); // 2026-03-16
+
+  let currentYear = today.getFullYear();
+  let currentMonth = today.getMonth();
+  let selectedDate = new Date(today);
+  let selectedCat = null;
+
+  // todos: { dateKey: [{title, category}] }
+  const todos = {
+    '2026-3-16': [
+      { title: '5km 달리기', category: '건강', meta: '격일 반복 (~4/10)' },
+      { title: '주말 나들이', category: '놀러가기', meta: '' },
+    ],
+    '2026-3-18': [{ title: '5km 달리기', category: '건강', meta: '격일 반복' }],
+    '2026-3-20': [{ title: '5km 달리기', category: '건강', meta: '격일 반복' }],
+    '2026-3-21': [{ title: '벚꽃 구경', category: '놀러가기', meta: '' }],
+    '2026-3-22': [{ title: '5km 달리기', category: '건강', meta: '격일 반복' }],
+    '2026-3-24': [{ title: '5km 달리기', category: '건강', meta: '격일 반복' }],
+    '2026-3-26': [{ title: '5km 달리기', category: '건강', meta: '격일 반복' }],
+    '2026-3-28': [{ title: '5km 달리기', category: '건강', meta: '격일 반복' }],
+    '2026-3-30': [
+      { title: 'Claude Code 50강 마감', category: '필수', meta: '' },
+      { title: '5km 달리기', category: '건강', meta: '격일 반복' },
+    ],
+  };
+
+  function dateKey(y, m, d) { return `${y}-${m+1}-${d}`; }
+
+  function renderCalendar() {
+    const grid = document.getElementById('calendarGrid');
+    grid.innerHTML = '';
+    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    const lastDate = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    let html = '<div class="week">';
+    let col = 0;
+
+    // Empty cells before month starts
+    for (let i = 0; i < firstDay; i++) {
+      html += `<div class="day-cell"></div>`;
+      col++;
+    }
+
+    for (let d = 1; d <= lastDate; d++) {
+      const dow = (firstDay + d - 1) % 7;
+      const isToday = (d === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear());
+      const isSelected = (d === selectedDate.getDate() && currentMonth === selectedDate.getMonth() && currentYear === selectedDate.getFullYear());
+      const key = dateKey(currentYear, currentMonth, d);
+      const dayTodos = todos[key] || [];
+
+      let classes = 'day-cell';
+      if (dow === 0) classes += ' sunday';
+      if (dow === 6) classes += ' saturday';
+      if (isToday) classes += ' today';
+
+      const dots = dayTodos.map(t =>
+        `<div class="dot" style="background:${CATEGORY_COLORS[t.category]}"></div>`
+      ).join('');
+
+      html += `<div class="${classes}" onclick="selectDay(${d})">
+        <div class="day-number">${d}</div>
+        <div class="dots">${dots}</div>
+      </div>`;
+
+      col++;
+      if (col % 7 === 0 && d < lastDate) {
+        html += '</div><div class="week">';
+      }
+    }
+
+    // Fill remaining cells
+    while (col % 7 !== 0) {
+      html += '<div class="day-cell"></div>';
+      col++;
+    }
+    html += '</div>';
+    grid.innerHTML = html;
+
+    const monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+    document.getElementById('monthLabel').textContent = `${currentYear}년 ${monthNames[currentMonth]}`;
+  }
+
+  function selectDay(d) {
+    selectedDate = new Date(currentYear, currentMonth, d);
+    renderCalendar();
+    renderTodos();
+  }
+
+  function renderTodos() {
+    const key = dateKey(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+    const dayTodos = todos[key] || [];
+    const dayNames = ['일','월','화','수','목','금','토'];
+    const dow = dayNames[selectedDate.getDay()];
+    const m = selectedDate.getMonth() + 1;
+    const d = selectedDate.getDate();
+
+    document.getElementById('selectedDateLabel').textContent = `${m}월 ${d}일 (${dow})`;
+
+    const isToday = selectedDate.toDateString() === today.toDateString();
+    document.getElementById('todayBadge').style.display = isToday ? '' : 'none';
+
+    const list = document.getElementById('todoList');
+    if (dayTodos.length === 0) {
+      list.innerHTML = `<p style="color:#AAAAAA;font-size:14px;text-align:center;padding:20px 0">할일이 없습니다</p>`;
+      return;
+    }
+
+    list.innerHTML = dayTodos.map((todo, i) => {
+      const color = CATEGORY_COLORS[todo.category] || '#888';
+      const meta = todo.meta ? `${todo.category} · ${todo.meta}` : todo.category;
+      return `
+        <div class="todo-card">
+          <div class="color-bar" style="background:${color}"></div>
+          <input type="checkbox" class="todo-checkbox" style="border-color:${color}"
+            onchange="this.style.background=this.checked?'${color}':''; this.style.borderColor=this.checked?'transparent':'${color}'">
+          <div class="todo-info">
+            <div class="todo-title">${todo.title}</div>
+            <div class="todo-meta" style="color:${color}">${meta}</div>
+          </div>
+          <button class="btn-more">⋯</button>
+        </div>`;
+    }).join('');
+  }
+
+  function changeMonth(dir) {
+    currentMonth += dir;
+    if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+    if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+    renderCalendar();
+  }
+
+  function openModal() {
+    const m = selectedDate.getMonth() + 1;
+    const d = selectedDate.getDate();
+    const y = selectedDate.getFullYear();
+    document.getElementById('inputDateLabel').textContent = `${y}. ${m}. ${d}`;
+    document.getElementById('inputTitle').value = '';
+    document.querySelectorAll('.cat-btn').forEach(b => b.className = 'cat-btn');
+    selectedCat = null;
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function closeModalOnOverlay(e) {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+
+  function selectCat(btn) {
+    document.querySelectorAll('.cat-btn').forEach(b => b.className = 'cat-btn');
+    selectedCat = btn.dataset.cat;
+    btn.className = `cat-btn selected-${selectedCat}`;
+  }
+
+  function saveTodo() {
+    const title = document.getElementById('inputTitle').value.trim();
+    if (!title) { alert('할일을 입력하세요'); return; }
+    if (!selectedCat) { alert('분류를 선택하세요'); return; }
+
+    const key = dateKey(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+    if (!todos[key]) todos[key] = [];
+    todos[key].push({ title, category: selectedCat, meta: '' });
+
+    closeModal();
+    renderCalendar();
+    renderTodos();
+  }
+
+  // Init
+  renderCalendar();
+  renderTodos();
+</script>
+</body>
+</html>
